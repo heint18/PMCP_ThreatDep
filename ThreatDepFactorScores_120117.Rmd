@@ -1,0 +1,38 @@
+---
+title: "ThreatDepFactorScores"
+author: "Tyler C. Hein"
+date: "12/1/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+##Importing dataset created with DataMerge_PMCP_100617.Rmd
+```{r}
+Data = read.csv('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/PMCPThreatDepInt_Full310.csv')
+```
+##Setting up SEM path models - see lavaan.ugent.be/tutorial/sem.html for example that I used
+```{r}
+library(lavaan)
+```
+#Specify Model 5 - same as 4, but dropped reverse scored home measure 
+```{r}
+ThreatDep5.model <- ' Threat =~ hold60m_punitivediscipline + AGGR42 + angout + AvHostility
+				           Dep=~ AvInvolvement + hom24ipl + IncometoNeeds.Average + MeanMEduc'
+```
+##Fit Model 5 with MLR estimator and FIML for missing data
+```{r}
+fit <- cfa(ThreatDep5.model, data = Data, missing= "ML", estimator = "MLR")
+summary(fit, fit.measures=TRUE, standardized=TRUE, rsquare = TRUE, modindices=TRUE)
+```
+##Get factor scores for threat dep as determined in model 5
+##Added 12.1.17 for use as predictors in growth models
+```{r}
+ThreatDepFactorScores <- (lavPredict(fit, type="lv",label=TRUE))
+write.csv(ThreatDepFactorScores, file = '/Users/tylerhein/Dropbox/PMCP paper/Analyses/Data/ThreatDepLatentFactorScores120117.csv')
+```

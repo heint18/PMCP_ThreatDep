@@ -1,0 +1,351 @@
+---
+title: "DataMerge_PMCP_100617"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+#Start with preparing threat / dep environmental variables for factor analysis 
+
+##Reading in all questionnaires for threat/dep factor analysis 
+##Questionnaires = Demo 18m, Holden 60m, CTS 42m, NQ 24m, NQ 60m, AAP 24m, HA 42m, Obs 18 m, Obs 24m, HOME 24m, Demo 24m, Demo 42m, Demo 60m, neighborhood risk trajectory
+```{r}
+library(foreign)
+Demo18m = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/Demographics age 18 months.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+Holden60m = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/Holden Parental Responses to Child Misbehavior mother age 60 months.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+CTS42m = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/Conflict Tactic Scale Mother Age 42 months.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+NQ24m = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/Neighborhood Questionnaire Mother Age 24 months.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+NQ60m = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/Neighborhood Questionnaire Mother Age 60 Months.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+AAP24m = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/All About Parenting Mother Age 24 months.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+HA42m = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/Handling Anger Mother Age 42 months.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+Obs18m = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/Observed EPCS age 18 months.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+Obs24m = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/Observed EPCS age 24 months.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+HOME24m = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/HOME Interviewer Ratings Age 24 months.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+Demo24m = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/Demographics Age 24 months.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+Demo42m = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/Demographics Age 42 months.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+Demo60m = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/Demographics age 60 months.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+Nrisk = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/traj file from SAS.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+```
+##Rename any "ID" with "id" for merging
+```{r}
+library(plyr)
+Holden60m <-rename(Holden60m, c("ID" = "id"))
+Demo24m <-rename(Demo24m, c("ID" = "id"))
+Demo60m <-rename(Demo60m, c("ID" = "id"))
+Obs18m <-rename(Obs18m, c("ID" = "id"))
+Obs24m <-rename(Obs24m, c("ID" = "id"))
+```
+##Merging all data sets in a stepwise fashion to evaluate missing data issue
+```{r}
+Data = merge(Demo18m, Holden60m, by = "id", all = TRUE)
+Data = merge(Data,CTS42m, by = "id", all = TRUE)
+Data = merge(Data,NQ24m, by = "id", all = TRUE)
+Data = merge(Data,NQ60m, by = "id", all = TRUE)
+Data = merge(Data,AAP24m, by = "id", all = TRUE)
+Data = merge(Data,HA42m, by = "id", all = TRUE)
+Data = merge(Data,Obs18m, by = "id", all = TRUE)
+Data = merge(Data,Obs24m, by = "id", all = TRUE)
+Data = merge(Data,HOME24m, by = "id", all = TRUE)
+Data = merge(Data,Demo24m, by = "id", all = TRUE)
+Data = merge(Data,Demo42m, by = "id", all = TRUE)
+Data = merge(Data,Demo60m, by = "id", all = TRUE)
+Data = merge(Data,Nrisk, by = "id", all = TRUE)
+```
+##Read in sav file with PMCP master participant list, only want these participants
+```{r}
+library(foreign)
+MasterIDs = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/PMCP310correctIDs.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+```
+##Merge Data and Master IDs
+```{r}
+Data = merge(Data, MasterIDs, by = "id", all = FALSE)
+```
+##Read in income to needs file created using Calculating_IncometoNeeds_PMCP_101017.Rmd
+```{r}
+library(foreign)
+IncometoNeeds = read.csv('/Users/tylerhein/Dropbox/PMCP paper/Income to needs/CalculatedIncometoNeeds101017.csv')
+```
+##Merge I2N with data (master IDs only)
+```{r}
+Data = merge(Data, IncometoNeeds, by = "id", all = FALSE)
+```
+#Other work done to these variables, see PMCP_DataPreparation.Rmd
+
+##Recoding all missing as NA
+```{r}
+library(car)
+Data<-recode(Data, "-99=NA")
+```
+##Recoding non-numeric responses into numeric based on coding used in spss files
+```{r}
+library(car)
+Data$childsex<-recode(Data$childsex, " 'Male' = 0; 'Female' = 1;", as.factor.result=FALSE)
+Data$crace<-recode(Data$crace, " 'European American' = 1; 'African American' = 2; 'Hispanic' = 3; 'Other' = 4;", as.factor.result=FALSE)
+Data$mrace<-recode(Data$mrace, " 'European American' = 1; 'African American' = 2; 'Hispanic' = 3; 'Other' = 4;", as.factor.result=FALSE)
+Data$ct42m16a<-recode(Data$ct42m16a, " 'never' = 0; 'once' = 1; '3-5 times' = 2; '6-10 times' = 3; '11-20 times' = 4; 'more than 20 times' = 5", as.factor.result=FALSE)
+Data$ct42m17a<-recode(Data$ct42m17a, " 'never' = 0; 'once' = 1; '3-5 times' = 2; '6-10 times' = 3; '11-20 times' = 4; 'more than 20 times' = 5", as.factor.result=FALSE)
+Data$ct42m20a<-recode(Data$ct42m20a, " 'never' = 0; 'once' = 1; '3-5 times' = 2; '6-10 times' = 3; '11-20 times' = 4; 'more than 20 times' = 5", as.factor.result=FALSE)
+Data$ct42m21a<-recode(Data$ct42m21a, " 'never' = 0; 'once' = 1; '3-5 times' = 2; '6-10 times' = 3; '11-20 times' = 4; 'more than 20 times' = 5", as.factor.result=FALSE)
+```
+##Reverse coding deprivation items so that higher scores mean less deprivation - this is  because these items are easier to reverse code than something like income, which is inversely related to deprivation
+###NQ is scored 1-3, so reverse score is 4 - score
+###AAP is scored 1-5, so reverse score is 6 - score
+###HA is scored 1-5, so reverse score is 5 - score
+```{r}
+Data$r_nq24m1=4-Data$nq24m1
+Data$r_nq24m5=4-Data$nq24m5
+Data$r_nq24m6=4-Data$nq24m6
+Data$r_nq24m7=4-Data$nq24m7
+Data$r_nq24m10=4-Data$nq24m10
+Data$r_nq24m11=4-Data$nq24m11
+Data$r_nq24m15=4-Data$nq24m15
+Data$r_nq24m16=4-Data$nq24m16
+Data$r_nq24m17=4-Data$nq24m17
+Data$r_nq60m1=4-Data$nq60m1
+Data$r_nq60m5=4-Data$nq60m5
+Data$r_nq60m6=4-Data$nq60m6
+Data$r_nq60m7=4-Data$nq60m7
+Data$r_nq60m10=4-Data$nq60m10
+Data$r_nq60m11=4-Data$nq60m11
+Data$r_nq60m15=4-Data$nq60m15
+Data$r_nq60m16=4-Data$nq60m16
+Data$r_nq60m17=4-Data$nq60m17
+Data$r_aap24m6=6-Data$aap24m6
+Data$r_aap24m10=6-Data$aap24m10
+Data$r_ap24m16r=6-Data$ap24m16r
+Data$r_ap24m17r=6-Data$ap24m17r
+Data$r_aap24m20=6-Data$aap24m20
+Data$r_aap24m27=6-Data$aap24m27
+Data$r_ap24m5r=6-Data$ap24m5r
+Data$r_ap24m18r=6-Data$ap24m18r
+Data$r_ap24m21r=6-Data$ap24m21r
+Data$r_ap24m23r=6-Data$ap24m23r
+Data$r_ap24m24r=6-Data$ap24m24r
+Data$r_ap24m26r=6-Data$ap24m26r
+Data$r_ap24m28r=6-Data$ap24m28r
+Data$r_ap24m31r=6-Data$ap24m31r
+Data$r_ap24m1r=6-Data$ap24m1r
+Data$r_aap24m3=6-Data$aap24m3
+Data$r_ap24m4r=6-Data$ap24m4r
+Data$r_ap24m7r=6-Data$ap24m7r
+Data$r_ap24m11r=6-Data$ap24m11r
+Data$r_aap24m14=6-Data$aap24m14
+Data$r_ap24m30r=6-Data$ap24m30r
+Data$r_aap24m32=6-Data$aap24m32
+Data$r_ha42m3=5-Data$ha42m3
+Data$r_ha42m5=5-Data$ha42m5
+Data$r_ha42m6=5-Data$ha42m6
+Data$r_ha42m10=5-Data$ha42m10
+Data$r_ha42m13=5-Data$ha42m13
+Data$r_ha42m16=5-Data$ha42m16
+Data$r_ha42m17=5-Data$ha42m17
+Data$r_ha42m21=5-Data$ha42m21
+```
+##Calculating Holden subscale and recalculating reverse scored subscales- to reduce number of variables 
+##Holden variables names needed to be capitalized 10.13.17
+```{r}
+Data$hold60m_punitivediscipline = Data$HOLD60M6 + Data$HOLD60M9
+Data$r_aap24m_inappropriateexpectations = Data$r_aap24m6 + Data$r_aap24m10 + Data$r_ap24m16r +Data$r_ap24m17r + Data$r_aap24m20 + Data$r_aap24m27
+Data$r_aap24m_empathy = Data$r_ap24m5r + Data$r_ap24m18r + Data$r_ap24m21r + Data$r_ap24m23r + Data$r_ap24m24r + Data$r_ap24m26r + Data$r_ap24m28r + Data$r_ap24m31r
+Data$r_aap24m_rolereversal = Data$r_ap24m1r + Data$r_aap24m3 + Data$r_ap24m4r + Data$r_ap24m7r + Data$r_ap24m11r + Data$r_aap24m14 + Data$r_ap24m30r + Data$r_aap24m32
+Data$r_ha42m_angerin = Data$r_ha42m3 + Data$r_ha42m5 + Data$r_ha42m6 + Data$r_ha42m10 + Data$r_ha42m13 + Data$r_ha42m16 + Data$r_ha42m17 + Data$r_ha42m21
+```
+##Averaging maternal and partner education - based on meeting 5.12.17 with Melissa Peckins
+##Reduces number of items going into factor analyses
+##Had to capitalize 24 and 60 m data 10.13.17
+```{r}
+Data$SumMEduc = (Data$meduc18 + Data$MEDUC24 + Data$meduc42 + Data$MEDUC60)
+Data$MeanMEduc = (Data$SumMEduc/4)
+Data$SumPEduc = (Data$peduc18 + Data$PEDUC24 + Data$peduc42 + Data$PEDU60)
+Data$MeanPEduc  =(Data$SumPEduc/4)
+```
+##Modifying Data_withinhome to average observation tasks across time and task 
+##Had to capitalize observation tasks 10.13.17
+```{r}
+Data$SumHostility = (Data$E18OCU23 + Data$E18OPZ25 + Data$E24OCU23 + Data$E24OPZ25)
+Data$SumWarmth = (Data$E18OCU24 + Data$E18OPZ26 + Data$E24OCU24 + Data$E24OPZ26)
+Data$SumPunitiveness = (Data$E18OCU25 + Data$E18OPZ27+ Data$E24OCU25 + Data$E24OPZ27)
+Data$SumInvolvement = (Data$E18OCU26 + Data$E18OPZ28 + Data$E24OCU26 + Data$E24OPZ28)
+Data$AvHostility = (Data$SumHostility/4)
+Data$AvWarmth = (Data$SumWarmth/4)
+Data$AvPunitiveness = (Data$SumPunitiveness/4)
+Data$AvInvolvement = (Data$SumInvolvement/4)
+```
+#Additional modifications to data, coming from DataPrep_SEM_ThreatDep_092117.Rmd
+
+##Reverse scoring 24 m HOME acceptance scale to include in threat construct
+###seemed to be absence of threat
+```{r}
+Data$r_hom24iac = 8 - Data$hom24iac
+```
+##Adding CTS verbal and physical aggression to reduce number of items going into factor
+###MP used sum score in past
+```{r}
+Data$AGGR42 = Data$VAGGR42 + Data$PAGGR42
+```
+##Averaging income to needs across all waves to reduce number of items going into factor
+###LWH indicated that including all just means we're getting at shared variance in I2N across time as opposed to I2N itself 
+```{r}
+Data$I2Nsum = Data$IncometoNeeds.18mos + Data$IncometoNeeds.24mos + Data$IncometoNeeds.42mos + Data$IncometoNeeds.60mos
+Data$IncometoNeeds.Average = Data$I2Nsum / 4
+```
+#Saving allllllll the environmental data for the final 310 in case I want it later
+```{r}
+write.csv(Data, file = '/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/EnviroUnder5_Full310.csv')
+```
+#Now saving all threat / dep measures from the CFA models only for just the final 310 
+##Observational task items had to be capitalized 10.13.17
+```{r}
+library(dplyr)
+Data = select(Data,id,hold60m_punitivediscipline,VAGGR42,PAGGR42,AGGR42,cp24m,angout,E18OCU23,E18OCU25,E18OPZ25,E18OPZ27,E24OCU23,E24OCU25,E24OPZ25,E24OPZ27,AvHostility,AvPunitiveness,r_hom24iac,r_aap24m_inappropriateexpectations,r_aap24m_empathy,r_aap24m_rolereversal,r_ha42m_angerin,E18OCU24,E18OCU26,E18OPZ26,E18OPZ28,
+E24OCU24,E24OCU26,E24OPZ26,E24OPZ28,AvWarmth,AvInvolvement,hom24ipl,hom24iac,IncometoNeeds.18mos,IncometoNeeds.24mos,IncometoNeeds.42mos,IncometoNeeds.60mos,IncometoNeeds.Average,MeanMEduc,MeanPEduc,r_nq24m1,r_nq24m5,r_nq24m6,r_nq24m7,r_nq24m10,r_nq24m11,r_nq24m15,r_nq24m16,r_nq24m17,r_nq60m1,r_nq60m5,r_nq60m6,r_nq60m7,
+r_nq60m10,r_nq60m11,r_nq60m15,r_nq60m16,r_nq60m17,nrisk1590,nrisk290,nrisk3590,nrisk500)
+```
+#Now reading in internalizing data - see DataPrep_SEM_ThreatDep_092117.Rmd 
+
+##Reading in all adolescent internalizing questionnaires 
+##Questionnaires = CDI 10 - 15, MASC 10- 15
+```{r}
+library(foreign)
+CDI10 = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/Child Depression Inventory Age 10 years.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+CDI11 =  read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/Child Depression Inventory - Target Report Age 11 years.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+CDI12 = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/Child Depression Inventory TC report age 12 years NEW.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+CDI13 = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/Child Depression Inventory Target Age 13 years.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+CDI15 = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/A15-CDI (Feelings Inv).SAV', to.data.frame = TRUE, use.value.labels = FALSE)
+MASC10 = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/Multidimensional Anxiety Scale Target Age 10 years.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+MASC11 = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/Multidimensional Anxiety Scale - Target Report Age 11 years.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+MASC12 = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/MASC Target report age 12 years NEW.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+MASC13 = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/Multidimensional Anxiety Scale Target Age 13 years.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+MASC15 = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/A15- Worry Scale (MASC).SAV', to.data.frame = TRUE, use.value.labels = FALSE)
+```
+##Fixing any data frame column  names to deal with same variable names across waves
+```{r}
+library(plyr)
+CDI10 <-rename(CDI10, c("cdi10" = "cdi10total"), warn_missing = TRUE, warn_duplicated = TRUE)
+CDI11 <-rename(CDI11, c("cdi11c" = "cdi11total"), warn_missing = TRUE, warn_duplicated = TRUE)
+CDI12 <-rename(CDI12, c("cdi12" = "cdi12total"), warn_missing = TRUE, warn_duplicated = TRUE)
+CDI12 <-rename(CDI12, c("form_id" = "form_id12"), warn_missing = TRUE, warn_duplicated = TRUE)
+CDI12 <-rename(CDI12, c("dov" = "dov12"), warn_missing = TRUE, warn_duplicated = TRUE)
+CDI12 <-rename(CDI12, c("age" = "age12"), warn_missing = TRUE, warn_duplicated = TRUE)
+CDI13 <-rename(CDI13, c("cdi13c" = "cdi13total"), warn_missing = TRUE, warn_duplicated = TRUE)
+CDI15 <-rename(CDI15, c("cdi15" = "cdi15total"), warn_missing = TRUE, warn_duplicated = TRUE)
+CDI15 <-rename(CDI15, c("form_id" = "form_id15"), warn_missing = TRUE, warn_duplicated = TRUE)
+CDI15 <-rename(CDI15, c("dov" = "dov15"), warn_missing = TRUE, warn_duplicated = TRUE)
+CDI15 <-rename(CDI15, c("age" = "age15"), warn_missing = TRUE, warn_duplicated = TRUE)
+MASC10 <-rename(MASC10, c("masc10" = "masc10total"), warn_missing = TRUE, warn_duplicated = TRUE)
+MASC11 <-rename(MASC11, c("masc11" = "masc11total"), warn_missing = TRUE, warn_duplicated = TRUE)
+MASC12 <-rename(MASC12, c("masc1" = "mas12c1"), warn_missing = TRUE, warn_duplicated = TRUE)
+MASC12 <-rename(MASC12, c("masc2" = "mas12c2"), warn_missing = TRUE, warn_duplicated = TRUE)
+MASC12 <-rename(MASC12, c("masc3" = "mas12c3"), warn_missing = TRUE, warn_duplicated = TRUE)
+MASC12 <-rename(MASC12, c("masc4" = "mas12c4"), warn_missing = TRUE, warn_duplicated = TRUE)
+MASC12 <-rename(MASC12, c("masc5" = "mas12c5"), warn_missing = TRUE, warn_duplicated = TRUE)
+MASC12 <-rename(MASC12, c("masc6" = "mas12c6"), warn_missing = TRUE, warn_duplicated = TRUE)
+MASC12 <-rename(MASC12, c("masc7" = "mas12c7"), warn_missing = TRUE, warn_duplicated = TRUE)
+MASC12 <-rename(MASC12, c("masc8" = "mas12c8"), warn_missing = TRUE, warn_duplicated = TRUE)
+MASC12 <-rename(MASC12, c("masc9" = "mas12c9"), warn_missing = TRUE, warn_duplicated = TRUE)
+MASC12 <-rename(MASC12, c("masc10" = "mas12c10"), warn_missing = TRUE, warn_duplicated = TRUE)
+MASC12 <-rename(MASC12, c("MASC12" = "masc12total"), warn_missing = TRUE, warn_duplicated = TRUE)
+MASC13 <-rename(MASC13, c("masc13" = "masc13total"), warn_missing = TRUE, warn_duplicated = TRUE)
+MASC15 <-rename(MASC15, c("masc15tc" = "masc15total"), warn_missing = TRUE, warn_duplicated = TRUE)
+```
+##Merging all data sets in a stepwise fashion to evaluate missing data issue
+```{r}
+Data.AdolInt = merge(CDI10, CDI11, by = "id", all = TRUE)
+Data.AdolInt = merge(Data.AdolInt,CDI12, by = "id", all = TRUE)
+Data.AdolInt = merge(Data.AdolInt,CDI13, by = "id", all = TRUE)
+Data.AdolInt = merge(Data.AdolInt,CDI15, by = "id", all = TRUE)
+Data.AdolInt = merge(Data.AdolInt,MASC10, by = "id", all = TRUE)
+Data.AdolInt = merge(Data.AdolInt,MASC11, by = "id", all = TRUE)
+Data.AdolInt = merge(Data.AdolInt,MASC12, by = "id", all = TRUE)
+Data.AdolInt = merge(Data.AdolInt,MASC13, by = "id", all = TRUE)
+Data.AdolInt = merge(Data.AdolInt,MASC15, by = "id", all = TRUE)
+```
+##Merge Data.AdolInt and Master IDs
+##Note that this will include an ID 377 who is not included in the 310 - will be dealt with when merging with threat/dep and later psychopathology data frames 
+```{r}
+Data.AdolInt = merge(Data.AdolInt, MasterIDs, by = "id", all = TRUE)
+```
+##Reading in adult internalizing questionnaires and interview data
+```{r}
+library(foreign)
+BAI20 = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/Beck Anxiety Inventory Age 20.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+BAI22 = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/BAI age 22.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+BDI20 = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/Beck Depression Inventory Age 20.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+BDI22 = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/BDI age 22.sav', to.data.frame = TRUE, use.value.labels = FALSE)
+Data.Interview = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Analyses/Data/SCID-I Scoresheet_Age 2022.sav', to.data.frame=TRUE, use.value.labels = FALSE)
+```
+##Merging all data sets in a stepwise fashion to evaluate missing data issue
+```{r}
+Data.AdultInt = merge(BAI20, BAI22, by = "id", all = TRUE)
+Data.AdultInt = merge(Data.AdultInt,BDI20, by = "id", all = TRUE)
+Data.AdultInt = merge(Data.AdultInt,BDI22, by = "id", all = TRUE)
+Data.AdultInt = merge(Data.AdultInt,Data.Interview, by = "id", all = TRUE)
+```
+##Merge Data.AdultInt and Master IDs
+##Note that this will include IDs 256 and 353 who are not included in the 310 - will be dealt with when merging with threat/dep and later psychopathology data frames 
+```{r}
+Data.AdultInt = merge(Data.AdultInt, MasterIDs, by = "id", all = TRUE)
+```
+#Statement to code for lifetime, present, and past depression and anxiety disorders
+```{r}
+Data.AdultInt$MDD20Ever = ifelse(Data.AdultInt$mdd20 == 1, "1", "0")
+Data.AdultInt$MDD20Curr = ifelse(Data.AdultInt$cmdd20 == 1, "1", "0")
+Data.AdultInt$MDD20Past = ifelse(Data.AdultInt$pmdd20 == 1, "1", "0")
+Data.AdultInt$Dys20Ever = ifelse(Data.AdultInt$dys20 == 1, "1", "0")
+Data.AdultInt$Dep20Ever = ifelse(Data.AdultInt$MDD20Ever == 1 | Data.AdultInt$Dys20Ever == 1, "1", "0")
+Data.AdultInt$SOP20Ever = ifelse(Data.AdultInt$sop20 == 1, "1", "0")
+Data.AdultInt$SOP20Curr = ifelse(Data.AdultInt$sop20chr == 3, "1", "0")
+Data.AdultInt$SOP20PastOnly = ifelse(Data.AdultInt$SOP20Ever == 1 & Data.AdultInt$SOP20Curr == 0, "1","0")
+Data.AdultInt$SPP20Ever = ifelse(Data.AdultInt$spp20 == 1, "1", "0")
+Data.AdultInt$SPP20Curr = ifelse(Data.AdultInt$spp20cur == 3, "1", "0")
+Data.AdultInt$SPP20PastOnly = ifelse(Data.AdultInt$SPP20Ever == 1 & Data.AdultInt$SPP20Curr == 0, "1","0")
+Data.AdultInt$GAD20Ever = ifelse(Data.AdultInt$gad20 == 1, "1", "0")
+Data.AdultInt$GAD20Curr = ifelse(Data.AdultInt$gad20sev == 8, "0", "1")
+Data.AdultInt$GAD20PastOnly = ifelse(Data.AdultInt$GAD20Ever == 1 & Data.AdultInt$GAD20Curr == 0, "1","0")
+Data.AdultInt$Anx20Ever = ifelse(Data.AdultInt$SOP20Ever == 1 | Data.AdultInt$SPP20Ever == 1 | Data.AdultInt$GAD20Ever == 1, "1", "0")
+Data.AdultInt$Anx20Curr = ifelse(Data.AdultInt$SOP20Curr == 1 | Data.AdultInt$SPP20Curr == 1 | Data.AdultInt$GAD20Curr == 1, "1", "0")
+Data.AdultInt$Anx20PastOnly = ifelse(Data.AdultInt$SOP20PastOnly == 1 | Data.AdultInt$SPP20PastOnly == 1 | Data.AdultInt$GAD20PastOnly == 1, "1", "0")
+Data.AdultInt$MDD22Ever = ifelse(Data.AdultInt$mdd_22 == 1, "1", "0")
+Data.AdultInt$MDD22Curr = ifelse(Data.AdultInt$cmdd_22 == 1, "1", "0")
+Data.AdultInt$MDD22Past = ifelse(Data.AdultInt$pmdd_22 == 1, "1", "0")
+Data.AdultInt$Dys22Ever = ifelse(Data.AdultInt$dys_22 == 1, "1", "0")
+Data.AdultInt$Dep22Ever = ifelse(Data.AdultInt$MDD22Ever == 1 | Data.AdultInt$Dys22Ever == 1, "1", "0")
+Data.AdultInt$SOP22Ever = ifelse(Data.AdultInt$sop_22 == 1, "1", "0")
+Data.AdultInt$SOP22Curr = ifelse(Data.AdultInt$sopchr_22 == 3, "1", "0")
+Data.AdultInt$SOP22PastOnly = ifelse(Data.AdultInt$SOP22Ever == 1 & Data.AdultInt$SOP22Curr == 0, "1","0")
+Data.AdultInt$SPP22Ever = ifelse(Data.AdultInt$spp_22 == 1, "1", "0")
+Data.AdultInt$SPP22Curr = ifelse(Data.AdultInt$sppcur_22 == 3, "1", "0")
+Data.AdultInt$SPP22PastOnly = ifelse(Data.AdultInt$SPP22Ever == 1 & Data.AdultInt$SPP22Curr == 0, "1","0")
+Data.AdultInt$GAD22Ever = ifelse(Data.AdultInt$gad_22 == 1, "1", "0")
+Data.AdultInt$GAD22Curr = ifelse(Data.AdultInt$gadsev_22 == 8, "0", "1")
+Data.AdultInt$GAD22PastOnly = ifelse(Data.AdultInt$GAD22Ever == 1 & Data.AdultInt$GAD22Curr == 0, "1","0")
+Data.AdultInt$Anx22Ever = ifelse(Data.AdultInt$SOP22Ever == 1 | Data.AdultInt$SPP22Ever == 1 | Data.AdultInt$GAD22Ever == 1, "1", "0")
+Data.AdultInt$Anx22Curr = ifelse(Data.AdultInt$SOP22Curr == 1 | Data.AdultInt$SPP22Curr == 1 | Data.AdultInt$GAD22Curr == 1, "1", "0")
+Data.AdultInt$Anx22PastOnly = ifelse(Data.AdultInt$SOP22PastOnly == 1 | Data.AdultInt$SPP22PastOnly == 1 | Data.AdultInt$GAD22PastOnly == 1, "1", "0")
+```
+#Merge adolescent and adult psychopathology data
+```{r}
+Data.Internalizing = merge(Data.AdolInt,Data.AdultInt, by = "id", all = FALSE)
+```
+#Saving all the internalizing for the final 310 in case I want it later
+```{r}
+write.csv(Data.Internalizing, file = '/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/AdolAdultInternalizing_Full310.csv')
+```
+#Now saving all internalizing measures for trajectory modeling and outcomes for just the final 310 
+```{r}
+library(dplyr)
+Data.Internalizing = select(Data.Internalizing,id,cdi10total,cdi11total,cdi12total,cdi13total,cdi15total,masc10total,masc11total,masc12total,masc13total,masc15total,BAI20tot,BAI22tot,BDI20Tot,BDI22Tot,MDD20Ever,MDD20Curr,MDD20Past, Dys20Ever, Dep20Ever,SOP20Ever,SOP20Curr, SOP20PastOnly, SPP20Ever, SPP20Curr, SPP20PastOnly,GAD20Ever,GAD20Curr,GAD20PastOnly, Anx20Ever,Anx20Curr, Anx20PastOnly,MDD22Ever, MDD22Curr, MDD22Past, Dys22Ever, Dep22Ever,SOP22Ever, SOP22Curr, SOP22PastOnly, SPP22Ever,SPP22Curr,SPP22PastOnly,GAD22Ever,GAD22Curr,GAD22PastOnly,Anx22Ever,Anx22Curr,Anx22PastOnly)
+```
+#Now merging and saving all threat / dep measures from the CFA models and all internalizing measures for trajectory modeling and outcomes only for just the final 310 
+```{r}
+Data = merge(Data,Data.Internalizing, by = "id", all = TRUE)
+write.csv(Data, file = '/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/PMCPThreatDepInt_Full310.csv')
+```
+
+

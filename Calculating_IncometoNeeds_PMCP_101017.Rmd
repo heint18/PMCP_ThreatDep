@@ -1,0 +1,108 @@
+---
+title: "Calculating PMCP Income to Needs"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+###Initializing Data sets
+```{r}
+library(foreign)
+Visit.years = read.csv('/Users/tylerhein/Dropbox/PMCP paper/Income to needs/from PMCP/VisitYear.csv')
+Eighteen.months = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Income to needs/from PMCP/Income to needs age 18 months.sav', to.data.frame = TRUE)
+Twentyfour.months = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Income to needs/from PMCP/Income to needs age 24 months.sav', to.data.frame = TRUE)
+Fourtytwo.months = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Income to needs/from PMCP/Income to needs age 42 months.sav', to.data.frame = TRUE)
+Sixty.months = read.spss('/Users/tylerhein/Dropbox/PMCP paper/Income to needs/from PMCP/Income to needs age 60 months.sav', to.data.frame = TRUE)
+FPL = read.csv('/Users/tylerhein/Dropbox/PMCP paper/Income to needs/FPL.csv')
+Eighteen.to.twentyfour.months = merge(Eighteen.months, Twentyfour.months, by = "id", all = TRUE)
+Eighteen.to.fourtytwo.months = merge (Eighteen.to.twentyfour.months, Fourtytwo.months, by = "id", all = TRUE)
+Eighteen.to.sixty.months = merge(Eighteen.to.fourtytwo.months, Sixty.months, by = "id", all = TRUE)
+Demos.with.YOV = merge (Eighteen.to.sixty.months, Visit.years, by = "id", all = TRUE)
+```
+##Calculate Number of Children for 18 months by subtracting number adults from number people in home
+```{r}
+Demos.with.YOV$chome18 = Demos.with.YOV$phome18 - Demos.with.YOV$ahome18
+```
+##Calculate Annual Income for waves by multiplying monthly income by 12
+```{r}
+Demos.with.YOV$annfaminc18 = 12*Demos.with.YOV$faminc18
+Demos.with.YOV$annfaminc24 = 12*Demos.with.YOV$faminc24
+Demos.with.YOV$annfaminc42 = 12*Demos.with.YOV$faminc42
+Demos.with.YOV$annfaminc60 = 12*Demos.with.YOV$faminc60
+```
+##Converting all data to integers
+```{r}
+Demos.with.YOV$faminc18 = as.integer(Demos.with.YOV$faminc18)
+Demos.with.YOV$phome18 = as.integer(Demos.with.YOV$phome18)
+Demos.with.YOV$ahome18 = as.integer(Demos.with.YOV$ahome18)
+Demos.with.YOV$chome18 = as.integer(Demos.with.YOV$chome18)
+Demos.with.YOV$faminc24 = as.integer(Demos.with.YOV$faminc24)
+Demos.with.YOV$phome24 = as.integer(Demos.with.YOV$phome24)
+Demos.with.YOV$ahome24 = as.integer(Demos.with.YOV$ahome24)
+Demos.with.YOV$chome24 = as.integer(Demos.with.YOV$chome24)
+Demos.with.YOV$faminc42 = as.integer(Demos.with.YOV$faminc42)
+Demos.with.YOV$phome42 = as.integer(Demos.with.YOV$phome42)
+Demos.with.YOV$ahome42 = as.integer(Demos.with.YOV$ahome42)
+Demos.with.YOV$chome42 = as.integer(Demos.with.YOV$chome42)
+Demos.with.YOV$faminc60 = as.integer(Demos.with.YOV$faminc60)
+Demos.with.YOV$phome60 = as.integer(Demos.with.YOV$phome60)
+Demos.with.YOV$ahome60 = as.integer(Demos.with.YOV$ahome60)
+Demos.with.YOV$chome60 = as.integer(Demos.with.YOV$chome60)
+Demos.with.YOV$YOV18 = as.integer(Demos.with.YOV$YOV18)
+Demos.with.YOV$YOV24 = as.integer(Demos.with.YOV$YOV24)
+Demos.with.YOV$YOV42 = as.integer(Demos.with.YOV$YOV42)
+Demos.with.YOV$YOV60 = as.integer(Demos.with.YOV$YOV60)
+Demos.with.YOV$annfaminc18 = as.integer(Demos.with.YOV$annfaminc18)
+Demos.with.YOV$annfaminc24 = as.integer(Demos.with.YOV$annfaminc24)
+Demos.with.YOV$annfaminc42 = as.integer(Demos.with.YOV$annfaminc42)
+Demos.with.YOV$annfaminc60 = as.integer(Demos.with.YOV$annfaminc60)
+```
+###Creating FPL data frames for each visit, renaming columns so they're identical to demos with yov frame 
+```{r}
+library(plyr)
+FPL.18 = rename(FPL, c("Year" = "YOV18", "NumKids" = "chome18", "NumAdults" = "ahome18", "FPL" = "FPL.18mos"))
+FPL.24 = rename(FPL, c("Year" = "YOV24", "NumKids" = "chome24", "NumAdults" = "ahome24", "FPL" = "FPL.24mos"))
+FPL.42 = rename(FPL, c("Year" = "YOV42", "NumKids" = "chome42", "NumAdults" = "ahome42", "FPL" = "FPL.42mos"))
+FPL.60 = rename(FPL, c("Year" = "YOV60", "NumKids" = "chome60", "NumAdults" = "ahome60", "FPL" = "FPL.60mos"))
+```
+###Creating merged data and FPL for each visit 
+```{r}
+Data.18 = merge(Demos.with.YOV, FPL.18, by=c("YOV18", "chome18", "ahome18"))
+Data.24 = merge(Demos.with.YOV, FPL.24, by=c("YOV24", "chome24", "ahome24"))
+Data.42 = merge(Demos.with.YOV, FPL.42, by=c("YOV42", "chome42", "ahome42"))
+Data.60 = merge(Demos.with.YOV, FPL.60, by=c("YOV60", "chome60", "ahome60"))
+```
+##Re-creating data set with FPLs for each visit without multiples of columns
+```{r}
+Data.18.FPL = Data.18[c("id", "FPL.18mos")]
+Data.24.FPL = Data.24[c("id", "FPL.24mos")]
+Data.42.FPL = Data.42[c("id", "FPL.42mos")]
+Data.60.FPL = Data.60[c("id", "FPL.60mos")]
+Data.18only = merge(Demos.with.YOV, Data.18.FPL, by = "id", all = TRUE)
+Data.24 = merge(Demos.with.YOV, FPL.24, by=c("YOV24", "chome24", "ahome24"), all = TRUE)
+Data.42 = merge(Demos.with.YOV, FPL.42, by=c("YOV42", "chome42", "ahome42"), all = TRUE)
+Data.60 = merge(Demos.with.YOV, FPL.60, by=c("YOV60", "chome60", "ahome60"), all = TRUE)
+Data.1824 = merge(Data.18only, Data.24.FPL, by = "id", all = TRUE)
+Data.182442 = merge(Data.1824, Data.42.FPL, by = "id", all = TRUE)
+Data.withallFPLs= merge(Data.182442, Data.60.FPL, by = "id", all = TRUE)
+```
+##Making sure FPLs are numerics
+```{r}
+Data.withallFPLs$FPL.18mos = as.integer(Data.withallFPLs$FPL.18mos)
+Data.withallFPLs$FPL.24mos = as.integer(Data.withallFPLs$FPL.24mos)
+Data.withallFPLs$FPL.42mos = as.integer(Data.withallFPLs$FPL.42mos)
+Data.withallFPLs$FPL.60mos = as.integer(Data.withallFPLs$FPL.60mos)
+```
+###Calculating Income to Needs Ratios by dividing annual income by FPL for that family for that year
+```{r}
+Data.withallFPLs$IncometoNeeds.18mos = Data.withallFPLs$annfaminc18/Data.withallFPLs$FPL.18mos
+Data.withallFPLs$IncometoNeeds.24mos = Data.withallFPLs$annfaminc24/Data.withallFPLs$FPL.24mos
+Data.withallFPLs$IncometoNeeds.42mos = Data.withallFPLs$annfaminc42/Data.withallFPLs$FPL.42mos
+Data.withallFPLs$IncometoNeeds.60mos = Data.withallFPLs$annfaminc60/Data.withallFPLs$FPL.60mos
+```
+###Write to csv file
+```{r}
+write.csv(Data.withallFPLs, file = '/Users/tylerhein/Dropbox/PMCP paper/Income to needs/CalculatedIncometoNeeds101017.csv')
+```

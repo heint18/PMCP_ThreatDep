@@ -1,0 +1,162 @@
+---
+title: "PathModels_PMCP_111017"
+author: "Tyler C. Hein"
+date: "11/9/2017"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+##Importing dataset created with DataMerge_PMCP_100617.Rmd
+```{r}
+Data = read.csv('C:\\Users\\heint\\Desktop\\ThreatDepPMCP\\PMCPThreatDepIntGCM_Full310.csv')
+```
+##Setting up SEM path models - see lavaan.ugent.be/tutorial/sem.html for example that I used
+```{r}
+library(lavaan)
+```
+#Specify Model 1 - Threat Dep predicting age 15 scores on CDI and MASC 
+```{r}
+Model1 <- ' Threat =~ hold60m_punitivediscipline + AGGR42 + angout + AvHostility
+				    Dep=~ AvInvolvement + hom24ipl + IncometoNeeds.Average + MeanMEduc
+            masc15total ~ Threat
+            cdi15total ~ Dep
+            masc15total ~~ cdi15total'
+```
+##Fit Model 1 with MLR estimator and FIML for missing data
+```{r}
+fit <- sem(Model1, data = Data, missing= "ML", estimator = "MLR")
+summary(fit, fit.measures=TRUE, standardized=TRUE, rsquare = TRUE, modindices=TRUE)
+```
+#Specify Model 2 - Threat Dep predicting age 20 lifetime diagnosis of depressive or anxiety disorders
+##Depressive = MDD and dysthymia; Anxiety = social phobia, specific phobia, generalized anxiety 
+```{r}
+Model2 <- ' Threat =~ hold60m_punitivediscipline + AGGR42 + angout + AvHostility
+				    Dep=~ AvInvolvement + hom24ipl + IncometoNeeds.Average + MeanMEduc
+            Anx20Ever ~ Threat
+            Dep20Ever ~ Dep
+            Anx20Ever ~~ Dep20Ever'
+```
+##Fit Model 2 with MLR estimator and FIML for missing data
+```{r}
+fit <- sem(Model2, data = Data, missing= "ML", estimator = "MLR")
+summary(fit, fit.measures=TRUE, standardized=TRUE, rsquare = TRUE, modindices=TRUE)
+```
+#Specify Model 3 - Threat Dep predicting age 22 lifetime diagnosis of depressive or anxiety disorders 
+```{r}
+Model3 <- ' Threat =~ hold60m_punitivediscipline + AGGR42 + angout + AvHostility
+				    Dep=~ AvInvolvement + hom24ipl + IncometoNeeds.Average + MeanMEduc
+            Anx22Ever ~ Threat
+            Dep22Ever ~ Dep
+            Anx22Ever ~~ Dep22Ever'
+```
+##Fit Model 3 with MLR estimator and FIML for missing data
+```{r}
+fit <- sem(Model3, data = Data, missing= "ML", estimator = "MLR")
+summary(fit, fit.measures=TRUE, standardized=TRUE, rsquare = TRUE, modindices=TRUE)
+```
+#Specify Model 4 - Threat Dep predicting age 15 scores on CDI  
+```{r}
+Model4 <- ' Threat =~ hold60m_punitivediscipline + AGGR42 + angout + AvHostility
+				    Dep=~ AvInvolvement + hom24ipl + IncometoNeeds.Average + MeanMEduc
+            cdi15total ~ Threat
+            cdi15total ~ Dep'
+```
+##Fit Model 4 with MLR estimator and FIML for missing data
+```{r}
+fit <- sem(Model4, data = Data, missing= "ML", estimator = "MLR")
+summary(fit, fit.measures=TRUE, standardized=TRUE, rsquare = TRUE, modindices=TRUE)
+```
+#Specify Model 5 - Threat Dep predicting age 15 scores on MASC 
+```{r}
+Model5 <- ' Threat =~ hold60m_punitivediscipline + AGGR42 + angout + AvHostility
+				    Dep=~ AvInvolvement + hom24ipl + IncometoNeeds.Average + MeanMEduc
+            masc15total ~ Threat
+            masc15total ~ Dep'
+```
+##Fit Model 5 with MLR estimator and FIML for missing data
+```{r}
+fit <- sem(Model5, data = Data, missing= "ML", estimator = "MLR")
+summary(fit, fit.measures=TRUE, standardized=TRUE, rsquare = TRUE, modindices=TRUE)
+```
+#Specify Model 6 - Threat Dep predicting age 20 lifetime diagnosis of depressive disorders
+```{r}
+Model6 <- ' Threat =~ hold60m_punitivediscipline + AGGR42 + angout + AvHostility
+				    Dep=~ AvInvolvement + hom24ipl + IncometoNeeds.Average + MeanMEduc
+            Dep20Ever ~ Threat
+            Dep20Ever ~ Dep'
+```
+##Fit Model 6 with MLR estimator and FIML for missing data
+```{r}
+fit <- sem(Model6, data = Data, missing= "ML", estimator = "MLR")
+summary(fit, fit.measures=TRUE, standardized=TRUE, rsquare = TRUE, modindices=TRUE)
+```
+#Specify Model 7 - Threat Dep predicting age 20 lifetime diagnosis of anxiety disorders
+```{r}
+Model7 <- ' Threat =~ hold60m_punitivediscipline + AGGR42 + angout + AvHostility
+				    Dep=~ AvInvolvement + hom24ipl + IncometoNeeds.Average + MeanMEduc
+            Anx20Ever ~ Threat
+            Anx20Ever ~ Dep'
+```
+##Fit Model 7 with MLR estimator and FIML for missing data
+```{r}
+fit <- sem(Model7, data = Data, missing= "ML", estimator = "MLR")
+summary(fit, fit.measures=TRUE, standardized=TRUE, rsquare = TRUE, modindices=TRUE)
+```
+#Specify Model 8 - Threat Dep predicting age 22 lifetime diagnosis of depressive disorders 
+```{r}
+Model8 <- ' Threat =~ hold60m_punitivediscipline + AGGR42 + angout + AvHostility
+				    Dep=~ AvInvolvement + hom24ipl + IncometoNeeds.Average + MeanMEduc
+            Dep22Ever ~ Threat
+            Dep22Ever ~ Dep'
+```
+##Fit Model 8 with MLR estimator and FIML for missing data
+```{r}
+fit <- sem(Model8, data = Data, missing= "ML", estimator = "MLR")
+summary(fit, fit.measures=TRUE, standardized=TRUE, rsquare = TRUE, modindices=TRUE)
+```
+#Specify Model 9 - Threat Dep predicting age 22 lifetime diagnosis of anxiety disorders 
+```{r}
+Model9 <- ' Threat =~ hold60m_punitivediscipline + AGGR42 + angout + AvHostility
+				    Dep=~ AvInvolvement + hom24ipl + IncometoNeeds.Average + MeanMEduc
+            Anx22Ever ~ Threat
+            Anx22Ever ~ Dep'
+```
+##Fit Model 9 with MLR estimator and FIML for missing data
+```{r}
+fit <- sem(Model9, data = Data, missing= "ML", estimator = "MLR")
+summary(fit, fit.measures=TRUE, standardized=TRUE, rsquare = TRUE, modindices=TRUE)
+```
+#Specify Model 10 - Threat Dep predicting slope for change in anxiety during adolescence 
+```{r}
+Model10 <- ' Threat =~ hold60m_punitivediscipline + AGGR42 + angout + AvHostility
+				    Dep=~ AvInvolvement + hom24ipl + IncometoNeeds.Average + MeanMEduc
+            A_S ~ Threat
+            A_S ~ Dep'
+```
+##Fit Model 10 with MLR estimator and FIML for missing data
+```{r}
+fit <- sem(Model10, data = Data, missing= "ML", estimator = "MLR")
+summary(fit, fit.measures=TRUE, standardized=TRUE, rsquare = TRUE, modindices=TRUE)
+```
+#Specify Model 11 - Threat Dep predicting slope for change in depression during adolescence 
+```{r}
+Model11 <- ' Threat =~ hold60m_punitivediscipline + AGGR42 + angout + AvHostility
+				    Dep=~ AvInvolvement + hom24ipl + IncometoNeeds.Average + MeanMEduc
+            D_S ~ Threat
+            D_S ~ Dep'
+```
+##Fit Model 11 with MLR estimator and FIML for missing data
+```{r}
+fit <- sem(Model11, data = Data, missing= "ML", estimator = "MLR")
+summary(fit, fit.measures=TRUE, standardized=TRUE, rsquare = TRUE, modindices=TRUE)
+```
+

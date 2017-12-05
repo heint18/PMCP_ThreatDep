@@ -1,0 +1,115 @@
+---
+title: "CFAs_PMCP_101817"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+##Importing dataset created with DataMerge_PMCP_100617.Rmd
+```{r}
+Data = read.csv('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/PMCPThreatDepInt_Full310.csv')
+```
+##Setting up CFA - see lavaan.ugent.be/tutorial/cfa.html for example that I used
+```{r}
+library(lavaan)
+```
+#Specify Model 1 
+```{r}
+ThreatDep.model <- ' Threat =~ hold60m_punitivediscipline + VAGGR42 + PAGGR42 + cp24m + angout + E18OCU23 + E18OCU25 +  E18OPZ25 + E18OPZ27 + E24OCU23 + E24OCU25 + E24OPZ25 + E24OPZ27
+				           Dep=~ r_aap24m_inappropriateexpectations + r_aap24m_empathy + r_aap24m_rolereversal + r_ha42m_angerin + E18OCU24 + E18OCU26 + E18OPZ26 + E18OPZ28 + E24OCU24 + E24OCU26 + E24OPZ26 + E24OPZ28 + hom24ipl + hom24iac + IncometoNeeds.18mos + IncometoNeeds.24mos + IncometoNeeds.42mos + IncometoNeeds.60mos + MeanMEduc + MeanPEduc'
+```
+##Fit Model 1 with MLR estimator and FIML for missing data
+```{r}
+fit <- cfa(ThreatDep.model, data = Data, missing= "ML", estimator = "MLR")
+summary(fit, fit.measures=TRUE, standardized=TRUE, rsquare = TRUE, modindices=TRUE)
+```
+#Specify Model 2 - same as model 1, but averaged observation tasks 
+```{r}
+ThreatDepAveObs.model <- ' Threat =~ hold60m_punitivediscipline + VAGGR42 + PAGGR42 + cp24m + angout + AvHostility + AvPunitiveness
+				           Dep=~ r_aap24m_inappropriateexpectations + r_aap24m_empathy + r_aap24m_rolereversal + r_ha42m_angerin + AvWarmth + AvInvolvement + hom24ipl + hom24iac + IncometoNeeds.18mos + IncometoNeeds.24mos + IncometoNeeds.42mos + IncometoNeeds.60mos + MeanMEduc + MeanPEduc'
+```
+##Fit Model 2 with MLR estimator and FIML for missing data
+```{r}
+fit <- cfa(ThreatDepAveObs.model, data = Data, missing= "ML", estimator = "MLR")
+summary(fit, fit.measures=TRUE, standardized=TRUE, rsquare = TRUE, modindices=TRUE)
+```
+#Specify Model 3 - home threat, neighborhood deprivation 
+```{r}
+HomeThreatNeighDep.model <- ' Threat =~ hold60m_punitivediscipline + VAGGR42 + PAGGR42 + cp24m + angout + AvHostility + AvPunitiveness
+				           Dep=~ r_nq24m1 + r_nq24m5 + r_nq24m6 + r_nq24m7 + r_nq24m10 + r_nq24m11 + r_nq24m15 + r_nq24m16 + r_nq24m17 + r_nq60m1 + r_nq60m5 + r_nq60m6 + r_nq60m7 + r_nq60m10 + r_nq60m11 + r_nq60m15 + r_nq60m16 + r_nq60m17 + nrisk1590 + nrisk290 + nrisk3590 + nrisk500'
+```
+##Fit Model 3 with MLR estimator and FIML for missing data
+```{r}
+fit <- cfa(HomeThreatNeighDep.model, data = Data, missing= "ML", estimator = "MLR")
+summary(fit, fit.measures=TRUE, standardized=TRUE, rsquare = TRUE, modindices=TRUE)
+```
+##Specify Model 4- cut down home threat/dep 
+###Changes to threat - added reverse scored HOME acceptance scale; replaced two CTS subscales with sum; dropped corporal punishment, global punitivness
+###Changes to deprivation - dropped all about parenting subscales (seemed to be more philosophy than practice), anger in, global warmth and involvement, HOME acceptance scale (moved to threat); averaged I2N across all waves; only used maternal education
+```{r}
+ThreatDep4.model <- ' Threat =~ hold60m_punitivediscipline + AGGR42 + angout + AvHostility + r_hom24iac
+				           Dep=~ AvInvolvement + hom24ipl + IncometoNeeds.Average + MeanMEduc'
+```
+##Fit Model 4 with MLR estimator and FIML for missing data
+```{r}
+fit <- cfa(ThreatDep4.model, data = Data, missing= "ML", estimator = "MLR")
+summary(fit, fit.measures=TRUE, standardized=TRUE, rsquare = TRUE, modindices=TRUE)
+```
+#Specify Model 5 - same as 4, but dropped reverse scored home measure 
+```{r}
+ThreatDep5.model <- ' Threat =~ hold60m_punitivediscipline + AGGR42 + angout + AvHostility
+				           Dep=~ AvInvolvement + hom24ipl + IncometoNeeds.Average + MeanMEduc'
+```
+##Fit Model 5 with MLR estimator and FIML for missing data
+```{r}
+fit <- cfa(ThreatDep5.model, data = Data, missing= "ML", estimator = "MLR")
+summary(fit, fit.measures=TRUE, standardized=TRUE, rsquare = TRUE, modindices=TRUE)
+```
+#Model 5 continues to be best fit, now will evaluate model fit by testing threat/dep separately and a sa single factor 
+#Specify Model 5, threat only 
+```{r}
+ThreatDep5.Threat.model <- ' Threat =~ hold60m_punitivediscipline + AGGR42 + angout + AvHostility'
+```
+##Fit Model 5, threat only with MLR estimator and FIML for missing data
+```{r}
+fit <- cfa(ThreatDep5.Threat.model, data = Data, missing= "ML", estimator = "MLR")
+summary(fit, fit.measures=TRUE, standardized=TRUE, rsquare = TRUE, modindices=TRUE)
+```
+#Specify Model 5, dep only 
+```{r}
+ThreatDep5.Dep.model <- 'Dep=~ AvInvolvement + hom24ipl + IncometoNeeds.Average + MeanMEduc'
+```
+##Fit Model 5, dep only with MLR estimator and FIML for missing data
+```{r}
+fit <- cfa(ThreatDep5.Dep.model, data = Data, missing= "ML", estimator = "MLR")
+summary(fit, fit.measures=TRUE, standardized=TRUE, rsquare = TRUE, modindices=TRUE)
+```
+#Specify Model 5, but a single factor
+```{r}
+ThreatDep5.1factor.model <- ' ThreatDep =~ hold60m_punitivediscipline + AGGR42 + angout + AvHostility + AvInvolvement + hom24ipl + IncometoNeeds.Average + MeanMEduc'
+```
+##Fit Model 5, single factor, with MLR estimator and FIML for missing data
+```{r}
+fit <- cfa(ThreatDep5.1factor.model, data = Data, missing= "ML", estimator = "MLR")
+summary(fit, fit.measures=TRUE, standardized=TRUE, rsquare = TRUE, modindices=TRUE)
+```
+##Now adding in fixing variance of latents to 1, freeing factor loading for first indicator
+```{r}
+ThreatDep5mod.model <- ' Threat =~ NA*hold60m_punitivediscipline + AGGR42 + angout + AvHostility
+				           Dep=~ NA*AvInvolvement + hom24ipl + IncometoNeeds.Average + MeanMEduc
+                   Threat ~~ 1*Threat
+                   Dep ~~ 1*Dep'
+```
+##Fit Model 5, modified loadings, with MLR estimator and FIML for missing data
+```{r}
+fit <- cfa(ThreatDep5mod.model, data = Data, missing= "ML", estimator = "MLR")
+summary(fit, fit.measures=TRUE, standardized=TRUE, rsquare = TRUE, modindices=TRUE)
+```

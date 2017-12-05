@@ -1,0 +1,64 @@
+---
+title: "CreatingCompositeScores_PMCP_112017"
+author: "Tyler C. Hein"
+date: "11/20/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+##Importing dataset created with DataMerge_PMCP_100617.Rmd (and then race from MP and growth curve mdoel slope was later added)
+```{r}
+Data = read.csv('/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/PMCPThreatDepInt_Full310_RaceGCM.csv')
+```
+#Creating composite measures of threat and deprivation 
+##Calculating Z Scores 
+```{r}
+Data$hold60m_punitivedisciplineZ <- scale(Data$hold60m_punitivediscipline, center = TRUE, scale = TRUE)
+Data$AGGR42Z <- scale(Data$AGGR42, center = TRUE, scale = TRUE)
+Data$angoutZ <- scale(Data$angout, center = TRUE, scale = TRUE)
+Data$AvHostilityZ <- scale(Data$AvHostility, center = TRUE, scale = TRUE)
+Data$AvInvolvementZ <- scale(Data$AvInvolvement, center = TRUE, scale = TRUE)
+Data$hom24iplZ <- scale(Data$hom24ipl, center = TRUE, scale = TRUE)
+Data$IncometoNeeds.AverageZ <- scale(Data$IncometoNeeds.Average, center = TRUE, scale = TRUE)
+Data$MeanMEducZ <- scale(Data$MeanMEduc, center = TRUE, scale = TRUE)
+```
+##Creating an indicator of how many exposures each participant has data for
+```{r}
+Data$hold60m_punitivediscipline.Incl = ifelse(is.na(Data$hold60m_punitivediscipline), "0", "1")
+Data$hold60m_punitivediscipline.Incl <- as.numeric(Data$hold60m_punitivediscipline.Incl)
+Data$AGGR42.Incl = ifelse(is.na(Data$AGGR42), "0", "1")
+Data$AGGR42.Incl <- as.numeric(Data$AGGR42.Incl)
+Data$angout.Incl = ifelse(is.na(Data$angout), "0", "1")
+Data$angout.Incl <- as.numeric(Data$angout.Incl)
+Data$AvHostility.Incl = ifelse(is.na(Data$AvHostility), "0", "1")
+Data$AvHostility.Incl <- as.numeric(Data$AvHostility.Incl)
+Data$AvInvolvement.Incl = ifelse(is.na(Data$AvInvolvement), "0", "1")
+Data$AvInvolvement.Incl <- as.numeric(Data$AvInvolvement.Incl)
+Data$hom24ipl.Incl = ifelse(is.na(Data$hom24ipl), "0", "1")
+Data$hom24ipl.Incl <- as.numeric(Data$hom24ipl.Incl)
+Data$IncometoNeeds.Average.Incl = ifelse(is.na(Data$IncometoNeeds.Average), "0", "1")
+Data$IncometoNeeds.Average.Incl <- as.numeric(Data$IncometoNeeds.Average.Incl)
+Data$MeanMEduc.Incl = ifelse(is.na(Data$MeanMEduc), "0", "1")
+Data$MeanMEduc.Incl <- as.numeric(Data$MeanMEduc.Incl)
+Data$Threat.Incl = Data$hold60m_punitivediscipline.Incl + Data$AGGR42.Incl + Data$angout.Incl + Data$AvHostility.Incl
+Data$Dep.Incl = Data$AvInvolvement.Incl + Data$hom24ipl.Incl + Data$IncometoNeeds.Average.Incl + 
+Data$MeanMEduc.Incl
+```
+##Creating composite scores for threat and deprivation
+```{r}
+Data$ThreatZSum <- rowSums(cbind(Data$hold60m_punitivedisciplineZ,Data$AGGR42Z,Data$angoutZ,Data$AvHostilityZ), na.rm = TRUE)
+Data$ThreatComp <- Data$ThreatZSum/Data$Threat.Incl
+Data$DepZSum <- rowSums(cbind(Data$AvInvolvementZ,Data$hom24iplZ,Data$IncometoNeeds.AverageZ,Data$MeanMEducZ), na.rm = TRUE)
+Data$DepComp <- Data$DepZSum/Data$Dep.Incl
+```
+##Save data to .csv for double checking 
+```{r}
+write.csv(Data, '/Users/tylerhein/Dropbox/PMCP paper/Data from PMCP/PMCPThreatDepInt_Full310_RaceGCM_Z112017.csv')
+```

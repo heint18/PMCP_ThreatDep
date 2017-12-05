@@ -1,0 +1,78 @@
+TITLE: 
+	Unconditional LCM for Anxiety;
+	
+DATA: 
+    FILE IS 
+    "C:\Users\heint\Desktop\ThreatDepPMCP\PMCPThreatDepInt_Full310_ForMplus.csv";
+    !FORMAT IS free ;
+    TYPE IS individual ;
+
+VARIABLE: 
+    NAMES ARE
+    id hold60m_punitivediscipline VAGGR42 PAGGR42
+    AGGR42 cp24m angout E18OCU23 E18OCU25 E18OPZ25
+    E18OPZ27 E24OCU23 E24OCU25 E24OPZ25 E24OPZ27
+    AvHostility AvPunitiveness r_hom24iac 
+    r_aap24m_inappropriateexpectations r_aap24m_empathy
+    r_aap24m_rolereversal r_ha42m_angerin E18OCU24
+    E18OCU26 E18OPZ26 E18OPZ28 E24OCU24 E24OCU26
+    E24OPZ26 E24OPZ28 AvWarmth AvInvolvement
+    hom24ipl hom24iac IncometoNeeds18mos IncometoNeeds24mos	
+    IncometoNeeds42mos	IncometoNeeds60mos	
+    IncometoNeedsAverage MeanMEduc	MeanPEduc r_nq24m1	
+    r_nq24m5 r_nq24m6 r_nq24m7 r_nq24m10 r_nq24m11 r_nq24m15	
+    r_nq24m16 r_nq24m17 r_nq60m1 r_nq60m5 r_nq60m6 
+    r_nq60m7 r_nq60m10 r_nq60m11 r_nq60m15 r_nq60m16 
+    r_nq60m17 nrisk1590	nrisk290 nrisk3590 nrisk500	
+    cdi10total cdi11total cdi12total cdi13total cdi15total	
+    masc10total	masc11total	masc12total	masc13total	
+    masc15total	BAI20tot BAI22tot BDI20Tot BDI22Tot	
+    MDD20Ever MDD20Curr	MDD20Past Dys20Ever	Dep20Ever	
+    SOP20Ever SOP20Curr	SOP20PastOnly SPP20Ever	SPP20Curr	
+    SPP20PastOnly GAD20Ever	GAD20Curr GAD20PastOnly	
+    Anx20Ever Anx20Curr	Anx20PastOnly MDD22Ever	
+    MDD22Curr MDD22Past	Dys22Ever Dep22Ever	SOP22Ever 
+    SOP22Curr SOP22PastOnly	SPP22Ever SPP22Curr	
+    SPP22PastOnly GAD22Ever	GAD22Curr GAD22PastOnly	
+    Anx22Ever Anx22Curr	Anx22PastOnly 
+    ;
+    USEVARIABLES ARE 
+    masc10total	masc11total	masc12total	masc13total	
+    masc15total;
+    MISSING ARE ALL (-9999);
+
+ANALYSIS:
+ESTIMATOR = mlr;
+
+MODEL:
+Int BY   masc10total@1 
+        masc11total@1 
+        masc12total@1 
+        masc13total@1 
+        masc15total@1
+        ;
+Slope BY   masc10total@0 
+        masc11total@1 
+        masc12total@2 
+        masc13total@3 
+        masc15total@4
+            ;
+
+[Int Slope];
+[masc10total-masc15total];
+Int Slope;
+Int WITH Slope;
+
+
+masc10total	masc11total	masc12total	masc13total	
+masc15total;
+
+OUTPUT: 
+	SAMPSTAT STDYX ;
+ PLOT:
+    series = masc10total-masc15total (*);
+    TYPE=PLOT3;
+SAVEDATA:
+      FILE = UnconditionalLGCMAnxietyLinearFreeVars102417.dat;
+      SAVE = FSCORES;
+ !     FORMAT is F6.0;
